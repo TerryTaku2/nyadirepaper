@@ -29,7 +29,7 @@ function adminSessionExpired(){
 
 const modal=document.getElementById('modal'), toast=document.getElementById('toast');
 document.getElementById('adminBtn').onclick=()=>{if(state.session.role==='admin')openAdminDashboard();else modal.classList.add('show')};document.getElementById('close').onclick=()=>modal.classList.remove('show');modal.onclick=e=>{if(e.target===modal)modal.classList.remove('show')};
-function notify(t){toast.textContent=t;toast.style.display='block';clearTimeout(window.tt);window.tt=setTimeout(()=>toast.style.display='none',2600)}
+function notify(t,duration=5000){toast.textContent=t;toast.style.display='block';clearTimeout(window.tt);window.tt=setTimeout(()=>toast.style.display='none',duration)}
 
 function clearAuthFields(){['username','password','studentUsername','studentPassword','createStudentId','createDefaultPassword','createFullName','createNewPassword','createConfirmPassword','newStandardAdminPassword'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});}
 function refreshUltimatePanel(){const panel=document.getElementById('ultimateAdminPanel');if(!panel)return;panel.style.display=activeAdminRole==='ultimate'?'block':'none';document.getElementById('standardAdminPasswordView').value=activeAdminRole==='ultimate'?'Hidden - stored securely':'';document.getElementById('newStandardAdminPassword').value='';}
@@ -237,7 +237,7 @@ document.getElementById('savePaper').onclick=async()=>{
   if(!moduleTitle||!moduleCode||!level||!semester||!subject||!year){notify('Please complete the Module Title, Module Code, Subject, Level, Semester and examination year.');return}
   if(!file){notify('Please choose a PDF examination paper.');return}
   if(file.type!=='application/pdf' && !/\.pdf$/i.test(file.name)){notify('Only PDF examination papers can be uploaded.');return}
-  const saveBtn=document.getElementById('savePaper');saveBtn.disabled=true;
+  const saveBtn=document.getElementById('savePaper'),saveText=saveBtn.textContent;saveBtn.disabled=true;saveBtn.textContent='Uploading...';notify('Uploading paper...');
   const form=new FormData();
   form.append('moduleTitle',moduleTitle);form.append('moduleCode',moduleCode);form.append('level',level);form.append('semester',semester);
   form.append('programme',programme);form.append('department',dept);form.append('subject',subject);form.append('year',year);form.append('file',file);
@@ -245,9 +245,10 @@ document.getElementById('savePaper').onclick=async()=>{
     await api('/api/admin/papers',{method:'POST',form});
     state.papers=await api('/api/admin/papers');renderPapers();document.getElementById('paperFormModal').classList.remove('show');
 
-  ['paperModuleTitle','paperModuleCode','paperYear','customPaperSubject'].forEach(k=>document.getElementById(k).value='');document.getElementById('paperFile').value='';document.getElementById('paperProgramme').value='Both';document.getElementById('paperLevel').value='Level 1';document.getElementById('paperSemester').value='Semester 1';document.getElementById('paperDept').value='Natural Science';updateSubjectOptions();
-  notify('Past paper added successfully.');
-  }catch(e){notify(e.message)}finally{saveBtn.disabled=false}
+  document.getElementById('paperModuleTitle').value='Communication Skills';document.getElementById('customPaperModuleTitle').value='';updateCustomModuleTitle();
+  ['paperModuleCode','paperYear','customPaperSubject'].forEach(k=>document.getElementById(k).value='');document.getElementById('paperFile').value='';document.getElementById('paperProgramme').value='Both';document.getElementById('paperLevel').value='Level 1';document.getElementById('paperSemester').value='Semester 1';document.getElementById('paperDept').value='Natural Science';updateSubjectOptions();
+  notify('Past paper uploaded successfully.');
+  }catch(e){notify(e.message)}finally{saveBtn.disabled=false;saveBtn.textContent=saveText}
 };
 document.getElementById('logoutAdmin').onclick=async()=>{
   try{await api('/api/logout',{method:'POST'})}catch(e){}
@@ -411,4 +412,3 @@ document.getElementById('publishAnnouncement').addEventListener('click',async()=
   api('/api/papers/count').then(r=>updateSitePaperCount(r.count)).catch(()=>{});
   loadAnnouncements();
 })();
-

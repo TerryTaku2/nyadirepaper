@@ -195,6 +195,13 @@ def test_paper_upload_validation(client):
     assert upload_paper(client, programme="Everyone").status_code == 422
 
 
+def test_ultimate_admin_can_upload_paper(client):
+    assert login_admin(client, "superadmin", "ultimate-pass-1").status_code == 200
+    response = upload_paper(client)
+    assert response.status_code == 201, response.text
+    assert response.json()["file"] == "exam.pdf"
+
+
 def test_paper_access_control_and_programme_filter(client, tmp_path):
     login_admin(client)
     both = upload_paper(client, "Both").json()["id"]
